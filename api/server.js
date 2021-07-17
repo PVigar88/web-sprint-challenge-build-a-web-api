@@ -7,8 +7,8 @@ const actionsRouter = require("./actions/actions-router");
 
 server.use(helmet());
 
-server.use("/actions", actionsRouter);
-server.use("/projects", projectsRouter);
+server.use("/api/actions", actionsRouter);
+server.use("/api/projects", projectsRouter);
 
 // Configure your server here
 // Build your actions router in /api/actions/actions-router.js
