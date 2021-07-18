@@ -62,7 +62,7 @@ router.put("/:id", (req, res) => {
   } else {
     const changes = req.body;
     const id = req.params.id;
-    Projects.update(id, { changes })
+    Projects.update(id, changes)
       .then((updatedProject) => {
         if (updatedProject) {
           return Projects.get(req.params.id);
