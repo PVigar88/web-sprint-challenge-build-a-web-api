@@ -23,7 +23,11 @@ router.get("/:id", (req, res) => {
   const { id } = req.params;
   Actions.get(id)
     .then((action) => {
-      res.status(200).json(action);
+      if (action) {
+        res.status(200).json(action);
+      } else {
+        res.status(404).json({ message: "no project with given id" });
+      }
     })
     .catch((err) => {
       res.status(500).json({
@@ -33,15 +37,21 @@ router.get("/:id", (req, res) => {
 });
 
 router.post("/", (req, res) => {
-  Actions.insert(req.body)
-    .then((action) => {
-      res.status(201).json(action);
-    })
-    .catch((err) => {
-      res.status(500).json({
-        message: "A Server Error has occured (Error Code: actrtr-pst)",
+  if (!req.body.project_id || !req.body.description || !req.body.notes) {
+    res
+      .status(400)
+      .json({ message: "The project must have a name and description" });
+  } else {
+    Actions.insert(req.body)
+      .then((action) => {
+        res.status(201).json(action);
+      })
+      .catch((err) => {
+        res.status(500).json({
+          message: "A Server Error has occured (Error Code: actrtr-pst)",
+        });
       });
-    });
+  }
 });
 
 router.put("/:id", (req, res) => {
