@@ -2,6 +2,10 @@
 const express = require("express");
 
 const Projects = require("../projects/projects-model.js");
+const {
+  validateProjectId,
+  validateProject,
+} = require("../projects/projects-middleware");
 
 const router = express.Router();
 
@@ -19,7 +23,7 @@ router.get("/", (req, res) => {
     });
 });
 
-router.get("/:id", (req, res) => {
+router.get("/:id", validateProjectId, (req, res) => {
   const { id } = req.params;
   Projects.get(id)
     .then((project) => {
@@ -54,31 +58,25 @@ router.post("/", (req, res) => {
   }
 });
 
-router.put("/:id", (req, res) => {
-  if (!req.body.name || !req.body.description || !req.body.completed) {
-    res.status(400).json({
-      message: "Project must have name, decription and completed status",
-    });
-  } else {
-    const changes = req.body;
-    const id = req.params.id;
-    Projects.update(id, changes)
-      .then((updatedProject) => {
-        if (updatedProject) {
-          return Projects.get(req.params.id);
-        } else {
-          res.status(404).json({ message: "project Id not found" });
-        }
-      })
-      .then((updatedProject) => {
-        res.status(200).json(updatedProject);
-      })
-      .catch((err) => {
-        res.status(500).json({
-          message: "A Server Error has occured (Error Code: pjtrtr-pt)",
-        });
+router.put("/:id", validateProjectId, validateProject, (req, res) => {
+  const changes = req.body;
+  const id = req.params.id;
+  Projects.update(id, changes)
+    .then((updatedProject) => {
+      if (updatedProject) {
+        return Projects.get(req.params.id);
+      } else {
+        res.status(404).json({ message: "project Id not found" });
+      }
+    })
+    .then((updatedProject) => {
+      res.status(200).json(updatedProject);
+    })
+    .catch((err) => {
+      res.status(500).json({
+        message: "A Server Error has occured (Error Code: pjtrtr-pt)",
       });
-  }
+    });
 });
 router.delete("/:id", (req, res) => {
   Projects.get(req.params.id).then((project) => {
