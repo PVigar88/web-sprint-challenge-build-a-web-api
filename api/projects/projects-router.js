@@ -2,10 +2,7 @@
 const express = require("express");
 
 const Projects = require("../projects/projects-model.js");
-const {
-  validateProjectId,
-  validateProject,
-} = require("../projects/projects-middleware");
+const { validateProjectId } = require("../projects/projects-middleware");
 
 const router = express.Router();
 
@@ -58,50 +55,47 @@ router.post("/", (req, res) => {
   }
 });
 
-router.put("/:id", validateProjectId, validateProject, (req, res) => {
-  const changes = req.body;
-  const id = req.params.id;
-  Projects.update(id, changes)
-    .then((updatedProject) => {
-      if (updatedProject) {
-        return Projects.get(req.params.id);
+router.put("/:id", validateProjectId, (req, res) => {
+  if (!req.body.name || !req.body.description || !req.body.completed) {
+    res.status(400).json({
+      message: "Project must have name, description and completed status",
+    });
+  } else {
+    const id = req.params.id;
+    Projects.update(id, req.body)
+      .then(async (updatedProject) => {
+        if (updatedProject) {
+          res.status(200).json(await Projects.get(id));
+        } else {
+          res.status(404).json({ message: "project Id not found" });
+        }
+      })
+      // .then((updatedProject) => {
+      //   updatedProject);
+      // })
+      .catch((err) => {
+        res.status(500).json({
+          message: "A Server Error has occured (Error Code: pjtrtr-pt)",
+        });
+      });
+  }
+});
+router.delete("/:id", (req, res) => {
+  Projects.remove(req.params.id)
+    .then((count) => {
+      if (!count) {
+        res.status(404).json({
+          message: "The project with the specified ID does not exist",
+        });
       } else {
-        res.status(404).json({ message: "project Id not found" });
+        res.status(200).json();
       }
-    })
-    .then((updatedProject) => {
-      res.status(200).json(updatedProject);
     })
     .catch((err) => {
       res.status(500).json({
-        message: "A Server Error has occured (Error Code: pjtrtr-pt)",
+        message: "A Server Error has occured (Error Code: pjtrtr-dlt)",
       });
     });
-});
-router.delete("/:id", (req, res) => {
-  Projects.get(req.params.id).then((project) => {
-    if (project) {
-      Projects.remove(id)
-        .then((count) => {
-          if (count) {
-            res.status(200).end();
-          } else {
-            res.status(404).json({
-              message: "The project with the specified ID does not exist",
-            });
-          }
-        })
-        .catch((err) => {
-          res.status(500).json({
-            message: "A Server Error has occured (Error Code: pjtrtr-dlt)",
-          });
-        });
-    } else {
-      res
-        .status(404)
-        .json({ message: "There is no project witht he given id" });
-    }
-  });
 });
 
 router.get("/:id/actions", (req, res) => {

@@ -2,6 +2,7 @@
 const express = require("express");
 
 const Actions = require("../actions/actions-model.js");
+const { validateActionId } = require("../actions/actions-middlware.js");
 
 const router = express.Router();
 
@@ -54,7 +55,7 @@ router.post("/", (req, res) => {
   }
 });
 
-router.put("/:id", (req, res) => {
+router.put("/:id", validateActionId, (req, res) => {
   if (
     !req.body.notes ||
     !req.body.description ||
@@ -65,16 +66,14 @@ router.put("/:id", (req, res) => {
       message: "Project must have name, decription and completed status",
     });
   } else {
-    Actions.update(id, changes)
-      .then((updatedAction) => {
+    const id = req.params.id;
+    Actions.update(id, req.body)
+      .then(async (updatedAction) => {
         if (updatedAction) {
-          return Actions.get(req.params.id);
+          res.status(200).json(await Actions.get(id));
         } else {
           res.status(404).json({ message: "action Id not found" });
         }
-      })
-      .then(() => {
-        res.status(200).json(updatedAction);
       })
       .catch((err) => {
         res.status(500).json({
@@ -84,8 +83,16 @@ router.put("/:id", (req, res) => {
   }
 });
 router.delete("/:id", (req, res) => {
-  Actions.remove(id)
-    .then((count) => {})
+  Actions.remove(req.params.id)
+    .then((count) => {
+      if (!count) {
+        res.status(404).json({
+          message: "The action with the specified ID does not exist",
+        });
+      } else {
+        res.status(200).json();
+      }
+    })
     .catch((err) => {
       res.status(500).json({
         message: "A Server Error has occured (Error Code: actrtr-dlt)",
